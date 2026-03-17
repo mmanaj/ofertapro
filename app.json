@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "OfertaPro",
+    "slug": "ofertapro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2563EB"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "pl.ofertapro.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Potrzebujemy dostępu do zdjęć, aby dodać logo firmy.",
+        "NSCameraUsageDescription": "Potrzebujemy dostępu do aparatu, aby zrobić zdjęcie logo."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#2563EB"
+      },
+      "package": "pl.ofertapro.app",
+      "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikacja potrzebuje dostępu do zdjęć, aby dodać logo firmy."
+        }
+      ]
+    ],
+    "scheme": "ofertapro",
+    "extra": {
+      "eas": {
+        "projectId": "WSTAW-SWOJE-EAS-PROJECT-ID"
+      }
+    }
+  }
+}
