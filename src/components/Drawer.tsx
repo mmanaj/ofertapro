@@ -1,15 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import {
-  Modal,
-  Animated,
-  Pressable,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  View,
-} from 'react-native';
-import { Text } from 'react-native-paper';
-import { COLORS } from '../theme/theme';
+import React from 'react';
+import { Text, StyleSheet } from 'react-native';
+import { Sheet } from '@tamagui/sheet';
 
 interface DrawerProps {
   visible: boolean;
@@ -18,108 +9,76 @@ interface DrawerProps {
   children: React.ReactNode;
 }
 
+/**
+ * iOS 26 Liquid Glass bottom sheet.
+ * Uses Tamagui Sheet with glass-inspired styling.
+ * Sheet.ScrollView is the scroll host — callers must NOT add their own ScrollView.
+ */
 export default function Drawer({ visible, onDismiss, title, children }: DrawerProps) {
-  const translateY = useRef(new Animated.Value(600)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.spring(translateY, {
-          toValue: 0,
-          damping: 20,
-          stiffness: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(translateY, {
-          toValue: 600,
-          duration: 220,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible]);
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onDismiss}
+    <Sheet
+      open={visible}
+      onOpenChange={(open) => { if (!open) onDismiss(); }}
+      snapPoints={[85]}
+      dismissOnSnapToBottom
+      modal
+      animation="medium"
     >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      {/* Translucent glass backdrop */}
+      <Sheet.Overlay
+        animation="lazy"
+        enterStyle={{ opacity: 0 }}
+        exitStyle={{ opacity: 0 }}
+        backgroundColor="rgba(0,0,0,0.38)"
+      />
+
+      {/* Glass sheet surface */}
+      <Sheet.Frame
+        backgroundColor="rgba(248,248,249,0.97)"
+        borderTopLeftRadius={22}
+        borderTopRightRadius={22}
+        paddingBottom={48}
+        borderWidth={0.5}
+        borderColor="rgba(255,255,255,0.9)"
       >
-        {/* Backdrop */}
-        <Animated.View style={[styles.backdrop, { opacity }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onDismiss} />
-        </Animated.View>
+        {/* iOS 26 grab handle — softer, more subtle */}
+        <Sheet.Handle
+          backgroundColor="rgba(60,60,67,0.18)"
+          marginTop={10}
+          marginBottom={4}
+          alignSelf="center"
+          width={36}
+          height={4}
+          borderRadius={2}
+        />
 
-        {/* Sheet */}
-        <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-          {/* Handle */}
-          <View style={styles.handle} />
+        {title ? (
+          <Text style={styles.title} accessibilityRole="header" allowFontScaling>
+            {title}
+          </Text>
+        ) : null}
 
-          {title ? (
-            <Text variant="titleMedium" style={styles.title}>
-              {title}
-            </Text>
-          ) : null}
-
+        <Sheet.ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {children}
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </Sheet.ScrollView>
+      </Sheet.Frame>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 40,
-    maxHeight: '92%',
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.outline,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 4,
-  },
   title: {
+    fontSize: 17,
     fontWeight: '700',
+    color: '#000000',
+    letterSpacing: -0.3,
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.outline,
-    marginBottom: 4,
+    paddingBottom: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(60,60,67,0.12)',
   },
 });
