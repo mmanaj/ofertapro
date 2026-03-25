@@ -42,6 +42,12 @@
         {
           "photosPermission": "Aplikacja potrzebuje dostępu do zdjęć, aby dodać logo firmy."
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.WSTAW-IOS-CLIENT-ID"
+        }
       ]
     ],
     "scheme": "ofertapro",

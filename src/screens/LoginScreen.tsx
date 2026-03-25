@@ -1,17 +1,54 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { GoogleAuthProvider, signInWithCredential, onAuthStateChanged } from 'firebase/auth';
 import { useStore } from '../store/useStore';
 import { GLASS } from '../theme/theme';
+import { auth } from '../firebase/config';
 
-// TODO: podłącz Firebase Auth — instrukcja w README.md
+GoogleSignin.configure({
+  // Web client ID z Firebase Console → Authentication → Sign-in method → Google → Web SDK config
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
+});
+
 export default function LoginScreen({ navigation }: any) {
   const company = useStore(s => s.company);
+  const [loading, setLoading] = React.useState(false);
+
+  // Jeśli użytkownik jest już zalogowany (trwała sesja) → przechodzimy dalej
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        navigation.replace(company ? 'Main' : 'Onboarding');
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const handleGoogleSignIn = async () => {
-    // TODO: GoogleSignin.signIn() + Firebase
-    navigation.replace(company ? 'Main' : 'Onboarding');
+    setLoading(true);
+    try {
+      await GoogleSignin.hasPlayServices();
+      const { data } = await GoogleSignin.signIn();
+      if (!data?.idToken) throw new Error('Brak idToken od Google');
+      const credential = GoogleAuthProvider.credential(data.idToken);
+      await signInWithCredential(auth, credential);
+      // onAuthStateChanged wywoła nawigację automatycznie
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        // użytkownik anulował — nic nie robimy
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        // już trwa logowanie
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert('Błąd', 'Google Play Services niedostępne na tym urządzeniu.');
+      } else {
+        Alert.alert('Błąd logowania', error.message ?? 'Spróbuj ponownie.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -34,13 +71,18 @@ export default function LoginScreen({ navigation }: any) {
         {/* Google sign-in */}
         <Pressable
           onPress={handleGoogleSignIn}
+          disabled={loading}
           accessibilityRole="button"
           accessibilityLabel="Zaloguj się przez Google"
-          style={({ pressed }) => [styles.googleBtn, pressed && styles.googleBtnPressed]}
+          style={({ pressed }) => [styles.googleBtn, pressed && styles.googleBtnPressed, loading && { opacity: 0.6 }]}
         >
-          <Ionicons name="logo-google" size={20} color="#EA4335" accessibilityElementsHidden />
+          {loading ? (
+            <ActivityIndicator size="small" color="#636366" />
+          ) : (
+            <Ionicons name="logo-google" size={20} color="#EA4335" accessibilityElementsHidden />
+          )}
           <Text style={styles.googleBtnLabel} allowFontScaling>
-            Zaloguj się przez Google
+            {loading ? 'Logowanie…' : 'Zaloguj się przez Google'}
           </Text>
         </Pressable>
 
